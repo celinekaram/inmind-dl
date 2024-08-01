@@ -29,28 +29,35 @@ for line in lines:
 # Display the result
 print(bboxes)
 
-
 # Apply augmentations
 transform = A.Compose([
-    A.HorizontalFlip(p=0.5),
-    A.RandomBrightnessContrast(p=0.2),
-    A.Rotate(limit=130, p=0.5),
-    A.Blur(blur_limit=300, p=0.2),
+    # Mirror % y with a probability 50%
+    A.HorizontalFlip(p=0.5), 
+    # Change brightness and contrast of the image randomly with a 20% probability
+    A.RandomBrightnessContrast(p=0.2), 
+    # Rotate image randomly within the range of -130 to 130 degrees with a 50% probability
+    A.Rotate(limit=130, p=0.5), 
+    # Apply blur effect to image with a maximum kernel size of 300, with a 20% probability
+    A.Blur(blur_limit=300, p=0.2), 
+    # Add Gaussian noise to the image with variance in the range of 10 to 50, with a 20% probability
     A.GaussNoise(var_limit=(10.0, 50.0), p=0.2),
-    A.ShiftScaleRotate(shift_limit=0.1, scale_limit=0.1, rotate_limit=30, p=0.5),
-    #A.RandomResizedCrop(480, 480),
-    A.RGBShift(r_shift_limit=200, g_shift_limit=200, b_shift_limit=200, p=0.5),
-    #A.RandomBrightness(limit=0.2, p=0.5),
-    A.CLAHE(clip_limit=4.0, p=0.5),
+    # Randomly shift, scale, and rotate the image within the given limits, with a 50% probability
+    A.ShiftScaleRotate(shift_limit=0.1, scale_limit=0.1, rotate_limit=30, p=0.5),  
+    # Randomly crop and resize the image to 480x480 pixels
+    A.RandomResizedCrop(480, 480),  
+    # Randomly shift the RGB channels within the given limits, with a 50% probability
+    A.RGBShift(r_shift_limit=200, g_shift_limit=200, b_shift_limit=200, p=0.5), 
+    # Randomly change the brightness of the image within the limit of 20%, with a 50% probability 
+    A.RandomBrightness(limit=0.2, p=0.5),  
+    # Apply Contrast Limited Adaptive Histogram Equalization (CLAHE) to image with a clip limit of 4.0, with a 50% probability
+    A.CLAHE(clip_limit=4.0, p=0.5),  
 ], bbox_params=A.BboxParams(format='yolo'))
-
 
 transformed = transform(image=image, bboxes=bboxes)
 transformed_image = transformed['image']
 transformed_bboxes = transformed['bboxes']
 
 print(transformed_bboxes)
-
 
 # Convert the bounding boxes from relative to absolute coordinates
 height, width, _ = transformed_image.shape
