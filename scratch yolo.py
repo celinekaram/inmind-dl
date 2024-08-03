@@ -260,3 +260,6 @@ def detect(image, model):
 
 # Model summary
 # summary(model, (3, 448, 448))
+
+# The loss function is a combination of localization, objectness, and classification losses.
+# Training is performed using stochastic gradient descent with momentum. Evaluation is based on mean Average Precision (mAP).
