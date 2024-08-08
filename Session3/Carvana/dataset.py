@@ -18,8 +18,8 @@ class CarvanaDataset(Dataset):
         return len(self.images)
 
     def __getitem__(self, idx):
-        image_dir = os.dir.join(self.image_dir, self.images[idx])
-        mask_dir = os.dir.join(self.mask_dir, self.image[idx]).replace(".jpg", "_mask.gif")
+        image_dir = os.path.join(self.image_dir, self.images[idx])
+        mask_dir = os.path.join(self.mask_dir, self.image[idx]).replace(".jpg", "_mask.gif")
         image = np.array[Image.open(image_dir).convert("RGB")]
         mask = np.array[Image.open(mask_dir).convert("L")]
         mask [ mask == 255.0] = 1.0 # white: 1, black: 0
