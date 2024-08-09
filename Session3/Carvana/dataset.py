@@ -19,13 +19,13 @@ class CarvanaDataset(Dataset):
 
     def __getitem__(self, idx):
         image_dir = os.path.join(self.image_dir, self.images[idx])
-        mask_dir = os.path.join(self.mask_dir, self.image[idx]).replace(".jpg", "_mask.gif")
-        image = np.array[Image.open(image_dir).convert("RGB")]
-        mask = np.array[Image.open(mask_dir).convert("L")]
-        mask [ mask == 255.0] = 1.0 # white: 1, black: 0
+        mask_dir = os.path.join(self.mask_dir, self.images[idx]).replace(".jpg", "_mask.gif")
+        image = np.array(Image.open(image_dir).convert("RGB"))
+        mask = np.array(Image.open(mask_dir).convert("L"), dtype=np.float32)
+        mask[mask==255.0] = 1.0 # white: 1, black: 0
         
         if self.transform:
-            augmentations = self.transform(image, mask)
+            augmentations = self.transform(image = image, mask = mask)
             image = augmentations ["image"]
-            mask = augmentations ['label']
+            mask = augmentations ["mask"]
         return image, mask
