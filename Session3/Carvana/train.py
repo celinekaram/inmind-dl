@@ -23,7 +23,7 @@ torch.manual_seed(seed)
 # Hyperparameters etc. 
 LEARNING_RATE = 2e-5
 DEVICE = "cpu"
-BATCH_SIZE = 2
+BATCH_SIZE = 4
 WEIGHT_DECAY = 0
 EPOCHS = 2
 NUM_WORKERS = 2
@@ -34,11 +34,11 @@ IMAGE_WIDTH = 720
 LOAD_MODEL_FILE = "Session3/Carvana/model_2.pth.tar"
 
 # Define paths
-train_path = 'C:/Datasets/Carvana/data/train_small'
-train_masks_path = 'C:/Datasets/Carvana/data/train_masks_small'
-val_path = 'C:/Datasets/Carvana/data/valid_small'
-val_mask_path = 'C:/Datasets/Carvana/data/valid_masks_small'
-saved_val_results = 'C:/Datasets/Carvana/data/saved_images/'
+train_path = 'C:/Datasets/Carvana/data/train'
+train_masks_path = 'C:/Datasets/Carvana/data/train_masks'
+val_path = 'C:/Datasets/Carvana/data/valid'
+val_mask_path = 'C:/Datasets/Carvana/data/valid_masks'
+saved_val_results = 'C:/Datasets/Carvana/data/saved'
 os.makedirs(saved_val_results, exist_ok=True)
 
 # Augmentations: normalize, resize, horizontal and vertical flip
