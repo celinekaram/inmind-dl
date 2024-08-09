@@ -23,15 +23,16 @@ torch.manual_seed(seed)
 # Hyperparameters etc. 
 LEARNING_RATE = 2e-5
 DEVICE = "cpu"
-BATCH_SIZE = 4
+BATCH_SIZE = 10
 WEIGHT_DECAY = 0
 EPOCHS = 2
 NUM_WORKERS = 2
 PIN_MEMORY = True
-LOAD_MODEL = True
+LOAD_MODEL = False
 IMAGE_HEIGHT = 480
 IMAGE_WIDTH = 720
 LOAD_MODEL_FILE = "Session3/Carvana/model_2.pth.tar"
+NEW_MODEL_FILE = "Session3/Carvana/model_1.pth.tar"
 
 # Define paths
 train_path = 'C:/Datasets/Carvana/data/train'
@@ -98,8 +99,8 @@ def main():
     # Setup loss function
     loss_fn = nn.BCEWithLogitsLoss()
     
-    if LOAD_MODEL:
-        load_checkpoint(torch.load(LOAD_MODEL_FILE), model)
+    # if LOAD_MODEL:
+    #     load_checkpoint(torch.load(LOAD_MODEL_FILE, weights_only = True), model)
 
     # Create training loop
     for epoch in range(EPOCHS):  # gives batch data
@@ -109,15 +110,13 @@ def main():
         checkpoint = {
             'state_dict': model.state_dict(),
             'optimizer': optimizer.state_dict(),}
-        save_checkpoint(checkpoint, filename='LOAD_MODEL_FILE')
+        save_checkpoint(checkpoint, filename='NEW_MODEL_FILE')
 
         # Check validation accuracy
         val_acc = check_accuracy(val_loader, model, device=DEVICE)
         print(f"Validation Accuracy: {val_acc}")
 
-        save_predictions_as_imgs(
-            val_loader, model, folder="saved_images/", device=DEVICE
-        )
+        save_predictions_as_imgs(val_loader, model, folder = saved_val_results, device=DEVICE)
 
 if __name__ == "__main__":
     main()
