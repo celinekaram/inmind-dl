@@ -8,117 +8,110 @@ import torch.nn as nn
 from utils import intersection_over_union
 
 
-class YoloLoss(nn.Module):
-    """
-    Calculate the loss for yolo (v1) model
-    """
+
+class YoloV1Loss(nn.Module):
 
     def __init__(self, S=7, B=2, C=20):
-        super(YoloLoss, self).__init__()
+        super(YoloV1Loss, self).__init__()
+        
         self.mse = nn.MSELoss(reduction="sum")
-
-        """
-        S is split size of image (in paper 7),
-        B is number of boxes (in paper 2),
-        C is number of classes (in paper and VOC dataset is 20),
-        """
         self.S = S
-        self.B = B
-        self.C = C
+        self.B = B # number of bounding boxes 
+        self.C = C # number of class scores
 
-        # These are from Yolo paper, signifying how much we should
-        # pay loss for no object (noobj) and the box coordinates (coord)
-        self.lambda_noobj = 0.5
+        # Pay losses:
+        # Increase loss from bounding box coordinate predictions
         self.lambda_coord = 5
+        # Decrease loss from confidence predictions for boxes that don’t contain objects
+        self.lambda_noobj = 0.5
 
+    # target is ground_truth
+    
     def forward(self, predictions, target):
-        # predictions are shaped (BATCH_SIZE, S*S(C+B*5) when inputted
+        # predictions: BATCH_SIZE, S*S(C+B*5) => N, S, S, C+B*5
         predictions = predictions.reshape(-1, self.S, self.S, self.C + self.B * 5)
+        """ 
+        * Prediction *:
+        0 -> C-1 : class probabilities
+        1st bounding box: C (confidence_score_1) | C+1 (x1) | C+2( y1) | C+3 (w1) | C+4 (h1)
+        2nd bounding box: C+5 (confidence_score_2) | C+6 (x2) | C+7( y2) | C+8 (w2) | C+9 (h2)
+        
+        * Target * has only 1 bounding box, similar to indexes of 1st bounding box
+        """
 
-        # Calculate IoU for the two predicted bounding boxes with target bbox
-        iou_b1 = intersection_over_union(predictions[..., 21:25], target[..., 21:25])
-        iou_b2 = intersection_over_union(predictions[..., 26:30], target[..., 21:25])
+        # Calculate IoU for the 2 predicted bounding boxes with target bbox
+        # ... : ellipsis, extract elements along the last axis for each item
+        # [..., 2] = [: ,: ,: ,2]
+        target_bb = target[..., self.C + 1 : self.C + 5]
+        pred_bb1 = predictions[..., self.C + 1 : self.C + 5]
+        pred_bb2 = predictions[..., self.C + 6 : self.C + 10]
+        
+        iou_b1 = intersection_over_union(pred_bb1,  target_bb )
+        iou_b2 = intersection_over_union(pred_bb2,  target_bb )
         ious = torch.cat([iou_b1.unsqueeze(0), iou_b2.unsqueeze(0)], dim=0)
 
         # Take the box with highest IoU out of the two prediction
-        # Note that bestbox will be indices of 0, 1 for which bbox was best
+        # bestbox will be indices of 0, 1 for which bbox was best
         iou_maxes, bestbox = torch.max(ious, dim=0)
-        exists_box = target[..., 20].unsqueeze(3)  # in paper this is Iobj_i
+        exists_box = target[..., self.C].unsqueeze(3)  # identity_obj_i (is there an object in cell i ?)
 
-        # ======================== #
         #   FOR BOX COORDINATES    #
-        # ======================== #
+        
+        # if bestbox = 1 (2nd bb is the best), if bestbox = 0, (1st bb is the best)
+        box_predictions = exists_box * (bestbox * pred_bb2 + (1 - bestbox) * pred_bb1)
+        box_targets = exists_box * target_bb
 
-        # Set boxes with no object in them to 0. We only take out one of the two 
-        # predictions, which is the one with highest Iou calculated previously.
-        box_predictions = exists_box * (
-            (
-                bestbox * predictions[..., 26:30]
-                + (1 - bestbox) * predictions[..., 21:25]
-            )
-        )
-
-        box_targets = exists_box * target[..., 21:25]
-
-        # Take sqrt of width, height of boxes to ensure that
-        box_predictions[..., 2:4] = torch.sign(box_predictions[..., 2:4]) * torch.sqrt(
-            torch.abs(box_predictions[..., 2:4] + 1e-6)
-        )
+        # Take sqrt of width, height of boxes (index 2 and 3)
+        box_predictions[..., 2:4] = torch.sign(box_predictions[..., 2:4]) * torch.sqrt(torch.abs(box_predictions[..., 2:4] + 1e-6))
+        # add 1e-6 in case there is a 0 value
         box_targets[..., 2:4] = torch.sqrt(box_targets[..., 2:4])
 
         box_loss = self.mse(
+            # N*S*S, 4
             torch.flatten(box_predictions, end_dim=-2),
             torch.flatten(box_targets, end_dim=-2),
         )
 
-        # ==================== #
-        #   FOR OBJECT LOSS    #
-        # ==================== #
+        pred_conf_bb1 = predictions[..., self.C : self.C + 1]
+        pred_conf_bb2 = predictions[..., self.C + 5 : self.C + 6]
+        target_conf_bb = target[..., self.C:self.C + 1]
+        
+        #   FOR OBJECT LOSS    # (if object exists ! )
 
         # pred_box is the confidence score for the bbox with highest IoU
-        pred_box = (
-            bestbox * predictions[..., 25:26] + (1 - bestbox) * predictions[..., 20:21]
-        )
+        pred_box = bestbox * pred_conf_bb2 + (1 - bestbox) * pred_conf_bb1
+        
+        # Calculate loss with best box (with highest IOU)
 
         object_loss = self.mse(
+            # N*S*S, 1
             torch.flatten(exists_box * pred_box),
-            torch.flatten(exists_box * target[..., 20:21]),
+            torch.flatten(exists_box * target_conf_bb),
         )
 
-        # ======================= #
-        #   FOR NO OBJECT LOSS    #
-        # ======================= #
-
-        #max_no_obj = torch.max(predictions[..., 20:21], predictions[..., 25:26])
-        #no_object_loss = self.mse(
-        #    torch.flatten((1 - exists_box) * max_no_obj, start_dim=1),
-        #    torch.flatten((1 - exists_box) * target[..., 20:21], start_dim=1),
-        #)
+        #   FOR NO OBJECT LOSS    # (if object does not exist ! )
+        
+        # Calculate loss of Bounding Box 1
 
         no_object_loss = self.mse(
-            torch.flatten((1 - exists_box) * predictions[..., 20:21], start_dim=1),
-            torch.flatten((1 - exists_box) * target[..., 20:21], start_dim=1),
+            torch.flatten((1 - exists_box) * pred_conf_bb1, start_dim=1),
+            torch.flatten((1 - exists_box) * target_conf_bb, start_dim=1),
         )
+
+        # Add loss of Bounding Box 2
 
         no_object_loss += self.mse(
-            torch.flatten((1 - exists_box) * predictions[..., 25:26], start_dim=1),
-            torch.flatten((1 - exists_box) * target[..., 20:21], start_dim=1)
+            torch.flatten((1 - exists_box) * pred_conf_bb2, start_dim=1),
+            torch.flatten((1 - exists_box) * target_conf_bb, start_dim=1)
         )
 
-        # ================== #
         #   FOR CLASS LOSS   #
-        # ================== #
 
         class_loss = self.mse(
-            torch.flatten(exists_box * predictions[..., :20], end_dim=-2,),
-            torch.flatten(exists_box * target[..., :20], end_dim=-2,),
+            # N, S, S, C -> N*S*S, C
+            torch.flatten(exists_box * predictions[..., 0 : self.C], end_dim=-2,),
+            torch.flatten(exists_box * target[..., 0 : self.C], end_dim=-2,),
         )
 
-        loss = (
-            self.lambda_coord * box_loss  # first two rows in paper
-            + object_loss  # third row in paper
-            + self.lambda_noobj * no_object_loss  # forth row
-            + class_loss  # fifth row
-        )
-
+        loss = self.lambda_coord * box_loss + object_loss  + self.lambda_noobj * no_object_loss + class_loss
         return loss
