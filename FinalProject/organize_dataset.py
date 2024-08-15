@@ -2,23 +2,26 @@ import os
 import shutil
 
 # Define the base directory where dataset is located
-base_dir = '.gitignore/raw_data/'
-new_dir = '.gitignore/organized_data'
+base_dir = 'raw_data/'
+new_dir = 'organized_data/'
+
+# Create new directory if they don't exist
+os.makedirs(new_dir, exist_ok=True)
 
 # Define the new directories where the files will be moved
 directories = {
     # RGB image: original colored images from the dataset
     "rgb_image": os.path.join(new_dir, 'rgb_images/'),
     # Semantic image: showing different objects in the scene with distinct colors
-    "semantic_image": os.path.join(new_dir, 'images/'),
+    "semantic_image": os.path.join(new_dir, 'semantic_segmentation/semantic_image/'),
     # Bounding box numpy: bounding box coordinates
-    "bounding_box_npy": os.path.join(new_dir, 'bounding_boxes/tight/'),
+    "bounding_box_npy": os.path.join(new_dir, 'bounding_boxes/tight_npy/'),
     # Bounding box label: mapping class_id to class_name for the bounding boxes.
-    "bounding_box_labels": os.path.join(new_dir, 'bounding_boxes/tight_labels/'),
+    "bounding_box_labels": os.path.join(new_dir, 'tight_labels_json/'),
     # Bounding box primary path: primitive paths corresponding to objects in the scene
-    "bounding_box_prim_paths": os.path.join(new_dir, 'bounding_boxes/tight_prim_paths/'),
+    "bounding_box_prim_paths": os.path.join(new_dir, 'tight_prim_paths_json/'),
     # Semantic labels: JSON files mapping colors to class names in the semantic segmentation images
-    "semantic_labels": os.path.join(new_dir, 'semantic_segmentation/labels/')
+    "semantic_labels": os.path.join(new_dir, 'semantic_segmentation/semantic_label_json/')
 }
 
 # Create directories if they don't exist
