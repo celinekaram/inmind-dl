@@ -37,8 +37,8 @@ NUM_WORKERS = 2
 PIN_MEMORY = True
 LOAD_MODEL = False
 LOAD_MODEL_FILE = "overfit.pth.tar"
-IMG_DIR = "data/images"
-LABEL_DIR = "data/labels"
+IMG_DIR = "C:/Datasets/VOC/data/images"
+LABEL_DIR = "C:/Datasets/VOC/data/labels"
 
 class Compose(object):
     def __init__(self, transforms):
@@ -88,14 +88,14 @@ def main():
     print("Starting training process...")
 
     train_dataset = VOCDataset(
-        "data/100examples.csv",
+        "C:/Datasets/VOC/data/100examples.csv",
         transform=transform,
         img_dir=IMG_DIR,
         label_dir=LABEL_DIR,
     )
 
     test_dataset = VOCDataset(
-        "data/test.csv", transform=transform, img_dir=IMG_DIR, label_dir=LABEL_DIR,
+        "C:/Datasets/VOC/data/test.csv", transform=transform, img_dir=IMG_DIR, label_dir=LABEL_DIR,
     )
 
     train_loader = DataLoader(
