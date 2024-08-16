@@ -70,7 +70,7 @@ def change_color(pcd):
     visualize(pcd, "Colored Point Cloud")
 
 def main():
-    directory = "./Pointclouds"
+    directory = "./data"
     ply_files = get_ply_files(directory)
     for file in ply_files:
         print(f"Processing file: {file}")

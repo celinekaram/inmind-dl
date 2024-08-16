@@ -121,7 +121,7 @@ def process_and_visualize_point_clouds(paths):
 
 def main():
     # Define the directory containing point cloud files
-    directory = './Pointclouds'
+    directory = './data'
 
     # Get all point cloud files in the directory
     ply_files = get_ply_files(directory)
