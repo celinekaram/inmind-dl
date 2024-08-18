@@ -2,8 +2,6 @@ import os
 import tqdm
 import shutil
 import torch
-from torch.utils.data import random_split
-from dataset import BMWObjectDataset
 
 # Paths to directories
 images_dir = 'organized_data/rgb_images'
@@ -51,27 +49,3 @@ def copy_files(indices, output_dir):
         # Copy files
         shutil.copy(img_path, output_dir['images'])
         shutil.copy(lbl_path, output_dir['labels'])
-
-def main():
-    # Load dataset
-    dataset = BMWObjectDataset(images_dir, labels_dir)
-
-    # Split sizes
-    total_size = len(dataset)
-    train_size = int(0.8 * total_size)
-    val_size = int(0.1 * total_size)
-    test_size = total_size - train_size - val_size
-
-    # Split dataset with reproducibility
-    train_set, val_set, test_set = random_split(dataset, [train_size, val_size, test_size])
-
-    # Create directories
-    create_directories()
-
-    # Copy files to respective directories
-    copy_files(train_set.indices, output_dirs['train'])
-    copy_files(val_set.indices, output_dirs['val'])
-    copy_files(test_set.indices, output_dirs['test'])
-
-if __name__ == "__main__":
-    main()
