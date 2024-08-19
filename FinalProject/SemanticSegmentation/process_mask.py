@@ -13,8 +13,16 @@ tight_label_dir = "organized_data/tight_labels_json"
 # Create a mapping from class_id to color tuple
 def create_class_id_to_color_map(idx):
     # Construct file paths correctly
-    semantic_label_path = os.path.join(semantic_label_dir, f'{idx}.json')
-    tight_label_path = os.path.join(tight_label_dir, f'{idx}.json')
+    idx_str = f"{idx:04d}"
+    semantic_label_path = os.path.join(semantic_label_dir, f"{idx_str}.json")
+    semantic_label_path = semantic_label_path.replace('\\', '/')
+    tight_label_path = os.path.join(tight_label_dir, f"{idx_str}.json")
+    tight_label_path = tight_label_path.replace('\\', '/')
+    
+    if not os.path.exists(semantic_label_path):
+        raise FileNotFoundError(f"No such file: '{semantic_label_path}'")
+    if not os.path.exists(tight_label_path):
+        raise FileNotFoundError(f"No such file: '{tight_label_path}'")
 
     # Load JSON files
     with open(semantic_label_path) as f:
@@ -53,7 +61,7 @@ def color_to_class_and_one_hot(mask, idx, num_classes=num_classes):
     
     # Initialize the mask output with zeros, where each pixel corresponds to a class ID
     mask_output = np.zeros((height, width, num_classes), dtype=np.uint8)
-
+    mask_id = -1
     # Iterate over the class_id to color mapping
     for i in range (height):
         for j in range (width):
