@@ -60,7 +60,6 @@ def color_to_class_and_one_hot(mask, idx, num_classes=num_classes):
             color_tuple = tuple(mask[i, j])
             for class_id, color in class_id_to_color_map.items():
                 if color_tuple == color:
-                    print('yes')
                     mask_id = class_id
                 else:
                     mask_id = num_classes - 1   # last class for unlabeled/ background/ other
@@ -68,13 +67,19 @@ def color_to_class_and_one_hot(mask, idx, num_classes=num_classes):
 
     return mask_output
 
-# Create the class_id to color mapping
-# class_id_to_color_map = create_class_id_to_color_map('0002')
-# print(class_id_to_color_map)
+def main():
+    # Test code
+    
+    # Create the class_id to color mapping
+    class_id_to_color_map = create_class_id_to_color_map('0002')
+    print(class_id_to_color_map)
 
-# Load the mask image
-mask_path = 'organized_data/semantic_segmentation/semantic_image/0002.png'
-mask = np.array(Image.open(mask_path).convert("RGB"), dtype=np.float32)
+    # Load the mask image
+    mask_path = 'organized_data/semantic_segmentation/semantic_image/0002.png'
+    mask = np.array(Image.open(mask_path).convert("RGB"), dtype=np.float32)
 
-# Convert the mask to one-hot encoding
-one_hot_mask = color_to_class_and_one_hot(mask, '0002')
+    # Convert the mask to one-hot encoding
+    one_hot_mask = color_to_class_and_one_hot(mask, '0002')
+
+if __name__ == "__main__":
+    main()
