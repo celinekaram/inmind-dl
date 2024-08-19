@@ -8,3 +8,4 @@ FinalProject/ObjectDetection/data
 FinalProject/ObjectDetection/__pycache__
 FinalProject/raw_data
 FinalProject/organized_data
+FinalProject/SemanticSegmentation/__pycache__/
