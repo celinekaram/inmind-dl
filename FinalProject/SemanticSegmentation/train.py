@@ -6,7 +6,7 @@ import torch
 import torch.nn as nn
 import torch.optim as optim
 from tqdm import tqdm
-from UNETmodel import CustomModel
+from model import CustomModel
 # from model import CustomModel
 from utils import (
     save_checkpoint,
@@ -91,7 +91,7 @@ def main():
         pin_memory
     )
     # Setup model
-    model = CustomModel(in_channels=3, out_channels=num_classes).to(device)
+    model = CustomModel(3, num_classes).to(device)
     
     # Setup optimizer
     optimizer = optim.Adam(model.parameters(), lr = learning_rate)
