@@ -5,6 +5,7 @@ Session3/Carvana/model_2.pth.tar
 Session4/data
 
 FinalProject/ObjectDetection/data
+FinalProject/SemanticSegmentation/data
 FinalProject/ObjectDetection/__pycache__
 FinalProject/raw_data
 FinalProject/organized_data
