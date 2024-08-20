@@ -77,6 +77,27 @@ def check_accuracy(loader, model, device):
     )
     print(f"Dice score: {dice_score/len(loader)}")
     model.train()
+    
+def calculate_metrics(predicted_masks, true_masks):
+    smooth = 1e-6
+    predicted_masks = predicted_masks.int()
+    true_masks = true_masks.int()
+    intersection = (predicted_masks & true_masks).float().sum((1, 2))
+    union = (predicted_masks | true_masks).float().sum((1, 2))
+    iou = (intersection + smooth) / (union + smooth)
+    
+    tp = (predicted_masks & true_masks).float().sum((1, 2))
+    fp = (predicted_masks & ~true_masks).float().sum((1, 2))
+    fn = (~predicted_masks & true_masks).float().sum((1, 2))
+
+    precision = tp / (tp + fp + smooth)
+    recall = tp / (tp + fn + smooth)
+
+    return (
+        iou.mean().item(),
+        precision.mean().item(),
+        recall.mean().item(),
+    )
 
 def save_predictions_as_imgs(
     loader, model, folder="saved_images/", device="cuda"
