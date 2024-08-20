@@ -49,3 +49,29 @@ def copy_files(indices, output_dir):
         # Copy files
         shutil.copy(img_path, output_dir['images'])
         shutil.copy(lbl_path, output_dir['labels'])
+        
+def main():
+    # Create the output directories
+    create_directories()
+
+    # List all image files
+    image_files = sorted(os.listdir(images_dir))
+    total_images = len(image_files)
+    indices = torch.randperm(total_images).tolist()
+
+    # Calculate split indices (80% train, 10% val, 10% test)
+    train_split = int(0.8 * total_images)
+    val_split = int(0.9 * total_images)
+
+    # Split indices into train, validation, and test sets
+    train_indices = indices[:train_split]
+    val_indices = indices[train_split:val_split]
+    test_indices = indices[val_split:]
+
+    # Copy files to respective directories
+    copy_files(train_indices, output_dirs['train'])
+    copy_files(val_indices, output_dirs['val'])
+    copy_files(test_indices, output_dirs['test'])
+
+if __name__ == "__main__":
+    main()
