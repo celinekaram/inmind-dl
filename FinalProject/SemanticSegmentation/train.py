@@ -2,12 +2,13 @@
 Main file for training ** model on BMW Semantic dataset
 """
 import os
+import matplotlib as plt
 import torch
 import torch.nn as nn
 import torch.optim as optim
 from tqdm import tqdm
 from model import CustomModel
-# from model import CustomModel
+from torch.utils.tensorboard import SummaryWriter
 from utils import (
     save_checkpoint,
     load_checkpoint,
@@ -19,13 +20,14 @@ from torch.optim.lr_scheduler import ReduceLROnPlateau
 import datetime
 import albumentations as A
 from albumentations.pytorch import ToTensorV2
+from utils import calculate_metrics
 
 seed = 123
 torch.manual_seed(seed)
 
 # Hyperparameters
 num_classes = 10
-batch_size = 16
+batch_size = 4
 learning_rate = 2e-5
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 num_epochs = 10
@@ -63,20 +65,43 @@ val_transform = A.Compose([
     ToTensorV2(),
 ])
 
-def train_fn(train_loader, model, optimizer, loss_fn):
-    loop = tqdm(train_loader, leave=True)
+def train_fn(train_loader, model, optimizer, loss_fn, scaler):
+    # Metric variables
+    running_loss = 0.0
+    iou_total = 0
+    dice_total = 0
+    precision_total = 0
+    recall_total = 0
+    counter = 0
+    loop = tqdm(train_loader)
     for step, (image, mask) in enumerate(loop):
         image = image.to(device)
-        mask = mask.to(device)
-        # Forward Pass
-        y_pred = model(image)
-        loss = loss_fn(y_pred, mask)
-        loss.backward()
-        optimizer.step()
+        mask = mask.float().unsqueeze(1).to(device)
+        
+        # forward pass
+        with torch.cuda.amp.autocast():
+            prediction = model(image)
+            loss = loss_fn(prediction, mask)
+            running_loss += loss.item()
+
+        # backward pass
         optimizer.zero_grad()
+        scaler.scale(loss).backward()
+        scaler.step(optimizer)
+        scaler.update()
+
+        # update tqdm loop
         loop.set_postfix(loss=loss.item())
-
-
+        
+        # Calculate metrics
+        iou, dice, precision, recall = calculate_metrics(prediction, mask)
+        iou_total += iou
+        dice_total += dice
+        precision_total += precision
+        recall_total += recall
+    return running_loss, iou_total, dice_total, precision_total, recall_total
+        
+        
 def main():
     # Get training and validation data loaders
     train_loader, val_loader = get_loaders(
@@ -106,10 +131,32 @@ def main():
     if load_memory:
         load_checkpoint(torch.load(load_model_file), model)
 
+    check_accuracy(val_loader, model, device)
+    
+    log_dir = "./logs" # directory where TensorBoard logs will be stored
+    writer = SummaryWriter(log_dir=log_dir) # log data for visualization in TensorBoard
+    print("Training started")
     # Create training loop
-    for epoch in range(num_epochs):  # gives batch data
+    for epoch in range(num_epochs):
         print(f"Epoch {epoch+1} start")
-        train_fn(train_loader, model, optimizer, loss_fn)
+        running_loss, iou_total, dice_total, precision_total, recall_total = train_fn(train_loader, model, optimizer, loss_fn)
+        
+        # Calculate average metrics in each epoch
+        avg_loss = running_loss / len(train_loader)
+        avg_iou = iou_total / len(train_loader)
+        avg_dice = dice_total / len(train_loader)
+        avg_precision = precision_total / len(train_loader)
+        avg_recall = recall_total / len(train_loader)
+
+        # Log metrics to TensorBoard associated with the current epoch number
+        writer.add_scalar("Loss/train", avg_loss, epoch)
+        writer.add_scalar("Metrics/IoU", avg_iou, epoch)
+        writer.add_scalar("Metrics/Dice", avg_dice, epoch)
+        writer.add_scalar("Metrics/Precision", avg_precision, epoch)
+        writer.add_scalar("Metrics/Recall", avg_recall, epoch)
+        
+        writer.close()
+        
         # save model
         checkpoint = {
             'state_dict': model.state_dict(),
