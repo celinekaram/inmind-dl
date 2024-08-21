@@ -26,9 +26,9 @@ def convert_to_yolo_format(bbox: np.ndarray, img_width: int, img_height: int) ->
 
 def main():
     
-    # Image dimensions
-    img_width = 640
-    img_height = 640
+    # Original Image dimensions
+    img_width = 1280
+    img_height = 720
     
     # Define paths
     npy_dir = 'organized_data/bounding_boxes/tight_npy'
