@@ -2,8 +2,10 @@ import os
 from torch.utils.data import Dataset
 from PIL import Image
 import numpy as np
-# Import the function to convert color masks to one-hot encoded class masks
-from process_mask import color_to_class_and_one_hot
+from pre_processing import create_id_color_map, conv_color_class
+
+# Define number of classes
+num_classes = 10
 
 class BMWSemanticDataset(Dataset):
     def __init__(self, img_dir, mask_dir, transform=None):
@@ -22,6 +24,7 @@ class BMWSemanticDataset(Dataset):
         self.images = sorted(os.listdir(self.img_dir))  
         # List and sort all mask files in the directory
         self.masks = sorted(os.listdir(self.mask_dir))  
+        self.id_color_map =  create_id_color_map()
     
     def __len__(self):
         """Returns the total number of images in the dataset."""
@@ -47,7 +50,7 @@ class BMWSemanticDataset(Dataset):
         # Load the mask and convert it to an RGB NumPy array
         mask = np.array(Image.open(mask_path).convert("RGB"), dtype=np.float32)
         # Convert the mask from color format to a one-hot encoded class mask
-        mask = color_to_class_and_one_hot(mask, idx)
+        mask = conv_color_class(mask, self.id_color_map, num_classes)
         # We can normalize the image by dividing by 255.0, if required
 
         if self.transform:
