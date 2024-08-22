@@ -1,11 +1,14 @@
-import numpy as np
-from PIL import Image
 import torch
 import torchvision
 from dataset import BMWSemanticDataset
 from torch.utils.data import DataLoader
+from pre_processing import create_id_color_map
 
-def save_checkpoint(state, filename="my_checkpoint.pth.tar"):
+num_classes = 10
+id_color_map = create_id_color_map()
+id_color_map[num_classes-1] = (0,0,0) # black for background, unlabeled, other
+
+def save_checkpoint(state, filename):
     print("=> Saving checkpoint")
     torch.save(state, filename)
 
@@ -53,30 +56,6 @@ def get_loaders(
     )
 
     return train_loader, val_loader
-
-def check_accuracy(loader, model, device):
-    num_correct = 0
-    num_pixels = 0
-    dice_score = 0
-    model.eval()
-
-    with torch.no_grad():
-        for x, y in loader:
-            x = x.to(device)
-            y = y.to(device).unsqueeze(1)
-            preds = torch.sigmoid(model(x))
-            preds = (preds > 0.5).float()
-            num_correct += (preds == y).sum()
-            num_pixels += torch.numel(preds)
-            dice_score += (2 * (preds * y).sum()) / (
-                (preds + y).sum() + 1e-8
-            )
-
-    print(
-        f"Got {num_correct}/{num_pixels} with acc {num_correct/num_pixels*100:.2f}"
-    )
-    print(f"Dice score: {dice_score/len(loader)}")
-    model.train()
     
 def calculate_metrics(predicted_masks, true_masks):
     smooth = 1e-6
@@ -99,18 +78,52 @@ def calculate_metrics(predicted_masks, true_masks):
         recall.mean().item(),
     )
 
-def save_predictions_as_imgs(
-    loader, model, folder="saved_images/", device="cuda"
-):
-    model.eval()
+def conv_prediction_img(mask_prediction, id_color_map=id_color_map):
+    """
+    Converts a batch of class probability tensors to images.
+
+    Args:
+        mask_prediction: A torch tensor of shape [batch_size, num_classes, height, width] with class probabilities.
+        id_color_map: A dictionary mapping class indices to color values.
+
+    Returns:
+        A torch tensor of shape [batch_size, rgb_channels=3, height, width] representing the images.
+    """
+    # Take the argmax over the class dimension to get the most probable class for each pixel
+    max_class = torch.argmax(mask_prediction, dim=1)  # Shape [batch_size, height, width]
+
+    # Initialize an output image tensor with the same batch size, height, and width, but with 3 channels for RGB
+    batch_size, height, width = max_class.shape
+    output_image = torch.zeros((batch_size, 3, height, width), dtype=torch.uint8)
+
+    # Vectorized mapping of class indices to RGB colors for each image in the batch
+    for class_idx, color in id_color_map.items():
+        if isinstance(color, str):
+            # Convert the color string to a tuple of integers
+            color = tuple(map(int, color.split(',')))
+        output_image[max_class == class_idx] = torch.tensor(color, dtype=torch.uint8)
+
+    return output_image
+    
+def save_predictions_as_imgs(loader, model, folder, device, id_color_map = id_color_map):
+    """
+    Saves model predictions as RGB images after converting class probability tensors to semantic images.
+
+    Args:
+        loader: DataLoader providing batches of images and ground truth masks.
+        model: The trained model used for making predictions.
+        folder: Path to save the output prediction images.
+        device: The device (CPU or GPU) on which computations will be carried out.
+        id_color_map: A dictionary mapping class indices to RGB color values.
+
+    Returns:
+        None. Saves the predicted masks to the specified folder.
+    """
+    model.eval() # evaluation mode
     for idx, (x, y) in enumerate(loader):
         x = x.to(device=device)
         with torch.no_grad():
-            preds = torch.sigmoid(model(x))
-            preds = (preds > 0.5).float()
-        torchvision.utils.save_image(
-            preds, f"{folder}/pred_{idx}.png"
-        )
+            preds = model(x)
+            preds_rgb = conv_prediction_img(preds, id_color_map)
+        torchvision.utils.save_image(preds_rgb, f"{folder}/pred_{idx}.png")
         torchvision.utils.save_image(y.unsqueeze(1), f"{folder}{idx}.png")
-
-    model.train()

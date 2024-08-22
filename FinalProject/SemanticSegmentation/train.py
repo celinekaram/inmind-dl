@@ -48,7 +48,7 @@ val_masks_path = 'SemanticSegmentation/data/val/masks'
 saved_val_results = 'SemanticSegmentation/data/val/results'
 
 models_dir = 'SemanticSegmentation/models'
-load_model_file = os.path.join(models_dir, "best.pth")
+load_model_file = os.path.join(models_dir, "best.pt")
 load_memory = False
 
 # Create directories if they don't exist
@@ -180,17 +180,13 @@ def main():
             'state_dict': model.state_dict(),
             'optimizer': optimizer.state_dict(),}
         try:
-            save_checkpoint(checkpoint, filename=os.path.join(models_dir, f"epoch_{epoch}.pth"))
+            save_checkpoint(checkpoint, filename=os.path.join(models_dir, f"epoch_{epoch}.pt"))
         except RuntimeError as e:
             print(f"Error saving checkpoint: {e}")
         
         scheduler.step(avg_loss)
 
         print(f"Epoch [{epoch+1}/{num_epochs}], Loss: {avg_loss:.4f}")
-
-        # Check validation accuracy
-        val_acc = check_accuracy(val_loader, model, device=device)
-        print(f"Validation Accuracy: {val_acc}")
 
 if __name__ == "__main__":
     main()
