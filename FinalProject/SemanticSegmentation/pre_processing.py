@@ -110,13 +110,12 @@ def conv_color_class(mask, id_color_map, num_classes):
     Returns:
     - one_hot_mask (numpy array): The one-hot encoded mask with shape (height, width, num_classes).
     """
-    
     # Get the height and width of the mask
-    height, width, _ = mask.shape  
+    height, width, _ = mask.shape  # (height, width, rgb) = (720, 1280, 3)
     
     # Initialize the mask output with zeros, where each pixel corresponds to a class ID
     mask_output = np.zeros((height, width, num_classes), dtype=np.uint8)
-    mask_id = -1
+    mask_id = num_classes - 1   # last class for unlabeled / background / other
     # Iterate over the class_id to color mapping
     for i in range (height):
         for j in range (width):
@@ -124,8 +123,7 @@ def conv_color_class(mask, id_color_map, num_classes):
             for class_id, color in id_color_map.items():
                 if color_tuple == color:
                     mask_id = class_id
-                else:
-                    mask_id = num_classes - 1   # last class for unlabeled / background / other
+                    break
             mask_output[i, j, mask_id] = 1 # one hot encoding
 
     return mask_output
@@ -146,7 +144,8 @@ def main():
     mask_path = 'organized_data/semantic_segmentation/semantic_image/0020.png'
     mask = np.array(Image.open(mask_path).convert("RGB"), dtype=np.float32)
     mask_output = conv_color_class(mask, id_color_map, num_classes)
-    print(f'Mask_output.shape = {mask_output.shape}') # (width, height, num_classes) = (720, 1280, 10)
+    print(f'Mask_output.shape = {mask_output.shape}') # (height, width, num_classes)
+    print(mask_path)
 
 if __name__ == "__main__":
     main()
