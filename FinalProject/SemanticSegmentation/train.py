@@ -41,11 +41,11 @@ IMAGE_HEIGHT = 720
 IMAGE_WIDTH = 1280
 
 # Define paths
-train_path = 'SemanticSegmentation/data/train_small/images'
-train_masks_path = 'SemanticSegmentation/data/train_small/masks'
-val_path = 'SemanticSegmentation/data/val_small/images'
-val_masks_path = 'SemanticSegmentation/data/val_small/masks'
-saved_val_results = 'SemanticSegmentation/data/val_small/results'
+train_path = 'SemanticSegmentation/data/train/images'
+train_masks_path = 'SemanticSegmentation/data/train/masks'
+val_path = 'SemanticSegmentation/data/val/images'
+val_masks_path = 'SemanticSegmentation/data/val/masks'
+saved_val_results = 'SemanticSegmentation/data/val/results'
 
 models_dir = 'SemanticSegmentation/models'
 load_model_file = os.path.join(models_dir, "best.pth")
