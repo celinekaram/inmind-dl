@@ -46,20 +46,19 @@ class BMWSemanticDataset(Dataset):
         mask_path = os.path.join(self.mask_dir, self.masks[idx])
 
         # Load the image and convert it to an RGB NumPy array
-        image = np.array(Image.open(image_path).convert("RGB"))
+        image = np.array(Image.open(image_path).convert("RGB")) # (height, width, rgb_channels)
         # Load the mask and convert it to an RGB NumPy array
-        mask = np.array(Image.open(mask_path).convert("RGB"), dtype=np.float32)
+        mask = np.array(Image.open(mask_path).convert("RGB"), dtype=np.float32) # (height, width, rgb_channels)
         # Convert the mask from color format to a one-hot encoded class mask
-        mask = conv_color_class(mask, self.id_color_map, num_classes)
-        # We can normalize the image by dividing by 255.0, if required
-
+        mask = conv_color_class(mask, self.id_color_map, num_classes) # (height, width, num_classes)
+        
         if self.transform:
             # If a transformation function is provided, apply it to both the image and mask
             augmented = self.transform(image=image, mask=mask)
             image = augmented["image"]  # Get the transformed image
             mask = augmented["mask"]  # Get the transformed mask
         
-        return image, mask  # Return the image and corresponding mask
+        return image, mask
 
 def main():
     images_dir = 'organized_data/rgb_images'  # Directory containing RGB images
