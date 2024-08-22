@@ -12,4 +12,5 @@ FinalProject/organized_data
 FinalProject/SemanticSegmentation/__pycache__/
 FinalProject/yolov5/*
 !FinalProject/yolov5/data.yml
-FinalProject/logs
+FinalProject/SemanticSegmentation/logs
+FinalProject/SemanticSegmentation/models
