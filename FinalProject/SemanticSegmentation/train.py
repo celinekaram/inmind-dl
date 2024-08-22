@@ -49,7 +49,7 @@ saved_val_results = 'SemanticSegmentation/data/val/results'
 
 models_dir = 'SemanticSegmentation/models'
 load_model_file = os.path.join(models_dir, "best.pth")
-load_memory = True
+load_memory = False
 
 # Create directories if they don't exist
 os.makedirs(saved_val_results, exist_ok=True)
@@ -60,6 +60,7 @@ def parse_args():
 
     parser.add_argument('--batch_size', type=int, default=batch_size, help='Batch size for training')
     parser.add_argument('--learning_rate', type=float, default=learning_rate, help='Learning rate for training')
+    parser.add_argument('--load_memory', type=str, choices=['true', 'false'], default='false', help='Whether to load memory. Use "true" or "false". Default is "false".')
     parser.add_argument('--best_checkpoint', type=str, default=load_model_file, help='Path to save the best checkpoint')
     parser.add_argument('--num_epochs', type=int, default=num_epochs, help='Number of epochs to train for')
     parser.add_argument('--num_workers', type=int, default=num_workers, help='Number of workers for data loading')
