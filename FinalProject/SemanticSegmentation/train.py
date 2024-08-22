@@ -17,9 +17,7 @@ from torch.utils.tensorboard import SummaryWriter
 from utils import (
     save_checkpoint,
     load_checkpoint,
-    get_loaders,
-    check_accuracy,
-    save_predictions_as_imgs
+    get_loaders
 )
 from torch.optim.lr_scheduler import ReduceLROnPlateau
 import albumentations as A
