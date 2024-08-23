@@ -10,7 +10,7 @@ FinalProject/ObjectDetection/__pycache__
 FinalProject/raw_data
 FinalProject/organized_data
 FinalProject/SemanticSegmentation/__pycache__/
-FinalProject/yolov5/*
-!FinalProject/yolov5/data.yml
 FinalProject/SemanticSegmentation/logs
 FinalProject/SemanticSegmentation/models
+*.jpg
+*.png
