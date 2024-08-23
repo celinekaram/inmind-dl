@@ -122,5 +122,8 @@ axes[1].set_title("Mask")
 plt.show()
 
 # Optional: Save or display the output image if needed
-cv2.imwrite('output_image_torch.png', outputs[0].argmax(0).cpu().numpy())
-cv2.imwrite('output_image_onnx.png', onnx_outputs[0][0].argmax(0))
+# cv2.imwrite('output_image_torch.png', outputs[0].argmax(0).cpu().numpy())
+# cv2.imwrite('output_image_onnx.png', onnx_outputs[0][0].argmax(0))
+
+# Visualize using netron on the command line
+# netron SemanticSegmentation/models/bmw.onnx
